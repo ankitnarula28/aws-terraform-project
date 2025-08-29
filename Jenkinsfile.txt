@@ -1,0 +1,47 @@
+
+pipeline {
+  agent any
+
+  environment {
+    AWS_ACCESS_KEY_ID     = credentials('AWS_ACCESS_KEY_ID')
+    AWS_SECRET_ACCESS_KEY = credentials('AWS_SECRET_ACCESS_KEY')
+  }
+
+  stages {
+
+    stage('Clone Repo') {
+      steps {
+        git url: 'https://github.com/ankitnarula28/aws-terraform-project.git', branch: 'master'
+      }
+    }
+
+    stage('Terraform Init & Apply - 0-bootstrap') {
+      steps {
+        dir('terraform-ec2/0-bootstrap') {
+          sh '''
+            terraform init
+            terraform apply -var-file="terraform.tfvars" -auto-approve
+          '''
+        }
+      }
+    }
+
+    stage('Terraform Init & Apply - ec2-setup') {
+      steps {
+        dir('terraform-ec2/ec2-setup') {
+          sh '''
+            terraform init
+            terraform apply -var-file="terraform.tfvars" -auto-approve
+          '''
+        }
+      }
+    }
+
+  }
+
+  post {
+    always {
+      cleanWs()
+    }
+  }
+}
